@@ -4,27 +4,22 @@ import random
 
 class Bubble:
 
-    SPOKE_COUNT = 30
 
-    def __init__(self, x, y, c):
+    def __init__(self, x, y, c, spokes):
         self.x = x
         self.y = y
         self.color = c
         self.spokes = []
         self.polygon = []
 
-        self.init_spokes()
-        #self.init_polygon()
+        self.init_spokes(spokes)
 
 
     def __str__(self):
         return '%s bubble' % self.color
 
-    def init_spokes(self):
 
-        print('INIT SPOKES')
-
-        count = self.SPOKE_COUNT
+    def init_spokes(self, count):
 
         circle = math.pi * 2
         angle = circle / count
@@ -53,7 +48,6 @@ class Bubble:
 
     def spokes_growing(self):
         growing = [spoke.growing for spoke in self.spokes]
-        #print('any spokes growing?? ', growing)
         return any(growing)
 
 
@@ -64,14 +58,13 @@ class Bubble:
 
     def check_spokes(self, other_bubbles, frame_segs):
 
-        print('number spokes active =', len(self.active_spokes()))
+        print('number spokes active for ', self , 'is', len(self.active_spokes()))
 
         if not self.spokes_growing():
             return
 
         # for every other bubble
         for other_bubble in other_bubbles:
-            # print('check bubbles')
             polygon = other_bubble.update_polygon()
 
             for spoke in self.active_spokes():
@@ -93,11 +86,10 @@ class Bubble:
 
 
 
-class Spoke():
+class Spoke:
 
     def __init__(self, angle, bubble_x, bubble_y, id):
         """ x, y are root of spoke - same as bubble location it grows from """
-        print("INIT SPOKE")
         self.x = bubble_x
         self.y = bubble_y
         self.angle = angle
@@ -135,18 +127,14 @@ def intersect_frame(spoke, frames):
         this_frame = frames[f]
         next_frame = frames[(f+1) % len(frames)]
 
-        # print(this_frame)
-        # print(next_frame)
-
         if intersect(spoke, this_frame, next_frame):
             return True
 
     return False
 
 
+
 def atan(opp, adj):
-
-
 
     if opp == 0 and adj == 0:
         return 0
@@ -164,8 +152,6 @@ def atan(opp, adj):
         small = math.atan(adj/opp)
         return (math.pi/2) + abs(small)
 
-        #return math.pi + math.atan(opp/adj)
-
     if opp < 0 and adj < 0:   # both neg
 
         return math.atan(opp/adj) + math.pi   # add 180 deg
@@ -175,10 +161,8 @@ def atan(opp, adj):
         if adj == 0:
             return 1.5 * math.pi
 
-        #return (math.pi * 1.5) - math.atan(opp/adj)     # add 270deg
         small = math.atan(adj/opp)
         return (math.pi * 1.5) + abs(small)
-
 
 
 
@@ -225,12 +209,6 @@ def on_both_sides(base, angle, pt1, pt2):
 
 
 def intersect(spoke, poly_seg_1, poly_seg_2):
-    #
-    # return False
-    # r =  random.choice( [False]*20 + [True])
-    # print('spoke stop', r)
-    # return(r)
-
 
     ''' Spoke has spoke.x and spoke.y, the coords of one end, the tip
     spoke.bubble_x , spoke.bubble_y coords of the end
@@ -240,12 +218,7 @@ def intersect(spoke, poly_seg_1, poly_seg_2):
 
     '''
 
-    # Check if spoke is on one side of poly_seg
-    # If spoke == poly_seg_1 == poly_seg_2
-
-    #print('\n\n')
-
-
+    # redundant?
     if spoke.x == poly_seg_1[0] and spoke.y == poly_seg_1[1]:
         # print('intersct spoke tip x and polyseg1')
         return True

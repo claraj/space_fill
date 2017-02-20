@@ -1,10 +1,20 @@
-from tkinter import Tk, Canvas, Frame, Scale, Button, BOTH, LEFT, X, HORIZONTAL, DISABLED
+from tkinter import Tk, Canvas, Frame, Scale, Button, ALL, BOTH, LEFT, X, HORIZONTAL, DISABLED
 import sys
 import bubble
 from geometry import Bubble
-import threading
 
 # Helpful: http://zetcode.com/gui/tkinter/drawing/
+color = 0
+colors = ['red', 'orange', 'yellow', 'green', 'blue', 'magenta', 'cyan']
+
+bubbles = []
+
+win = None
+
+width = 400
+height = 250
+
+SPOKE_COUNT = 30
 
 class Window(Frame):
     def __init__(self, parent):
@@ -22,11 +32,6 @@ class Window(Frame):
 
         self.canvas.pack(fill=BOTH, expand=1)
         self.canvas.pack()
-
-        #self.draw(self.canvas)
-
-        scale = Scale(self, from_=10, to=100, orient=HORIZONTAL)
-        scale.pack(side=LEFT)
 
         self.go_button = Button(self, text="Go", command=go)
         self.go_button.pack(side=LEFT)
@@ -53,15 +58,15 @@ def canvas_click(event):
     color = (color+1) % len(colors)
     print(color)
     print(event.x, event.y)
-    win.canvas.create_rectangle(event.x-1, event.y-1, event.x, event.y, fill=colors[color], outline=colors[color])
-    b = Bubble(event.x, event.y, colors[color])
+    win.canvas.create_rectangle(event.x - 1, event.y - 1, event.x, event.y, fill=colors[color], outline=colors[color])
+    b = Bubble(event.x, event.y, colors[color], SPOKE_COUNT)
     bubbles.append(b)
     print(bubbles)
 
 
 def go():
 
-    x = 400 # int(win.canvas['width'])
+    x = 400 # int(win.canvas['width'])  # how to measure the canvas?
     y = 200 #int(win.canvas['height'])
 
     print("go!", x, y)
@@ -73,12 +78,11 @@ def go():
 
 
 def update(bubbles_and_spokes):
-    #print('update message received')
-    # Draw all lines
-    #print('threads running = ', threading.active_count())
+    # Remove previous lines. Draw all lines.
+    win.canvas.delete(ALL)
 
     for bub in bubbles_and_spokes:
-        # draw bubbles
+        # for each bubble...
         for spoke in bub.spokes:
             # draw spoke
             win.canvas.create_line(bub.x, bub.y, spoke.x, spoke.y, fill=bub.color)
@@ -124,22 +128,13 @@ def quit():
     sys.exit()
 
 
-color = 0
-colors = ['red', 'orange', 'yellow', 'green', 'blue', 'magenta', 'cyan']
 
-bubbles = []
 
-win = None
-
-width = 400
-height = 250
 
 def main():
     global win
     root = Tk()
     win = Window(root)
-
-
 
     root.geometry("%dx%d" % (width, height))
     root.mainloop()
