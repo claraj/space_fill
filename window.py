@@ -17,7 +17,7 @@ class Window(Frame):
         self.parent.title('Bubble Fill')
         self.pack(fill=X, expand=1)
 
-        self.canvas = Canvas(self)
+        self.canvas = Canvas(self, borderwidth=1, background='black')
         self.canvas.bind('<Button-1>', canvas_click)
 
         self.canvas.pack(fill=BOTH, expand=1)
@@ -46,14 +46,14 @@ class Window(Frame):
 def canvas_click(event):
     global color
 
-    if len(bubbles) >= len(colors):
+    if len(bubbles) >= len(colors) * 2:
         print('max bubbles, no more.')
         return
 
     color = (color+1) % len(colors)
     print(color)
     print(event.x, event.y)
-    win.canvas.create_rectangle(event.x-1, event.y-1, event.x, event.y, fill=colors[color])
+    win.canvas.create_rectangle(event.x-1, event.y-1, event.x, event.y, fill=colors[color], outline=colors[color])
     b = Bubble(event.x, event.y, colors[color])
     bubbles.append(b)
     print(bubbles)
@@ -61,21 +61,21 @@ def canvas_click(event):
 
 def go():
 
-    x = int(win.canvas['width'])
-    y = int(win.canvas['height'])
+    x = 400 # int(win.canvas['width'])
+    y = 200 #int(win.canvas['height'])
 
     print("go!", x, y)
     win.go_button['state'] = DISABLED
 
 
-    frame = [(0, 0), (0, y), (x, 0), (x, y)]
+    frame = [(0, 0), (0, y), (x, y), (x, 0)]
     bubble.start_bubbles(bubbles, frame, update, done)
 
 
 def update(bubbles_and_spokes):
-    print('update message received')
+    #print('update message received')
     # Draw all lines
-    print('threads running = ', threading.active_count())
+    #print('threads running = ', threading.active_count())
 
     for bub in bubbles_and_spokes:
         # draw bubbles

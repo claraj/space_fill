@@ -5,8 +5,13 @@ from threading import Thread
 
 iters = 0
 
+last_run  = 0
 
 def start_bubbles(bubbles, frame, update_callback, done_callback):
+
+
+    global last_run
+    last_run = time.time()
 
     # for bubble in bubbles:
     #     bubble.init_spokes()
@@ -18,6 +23,12 @@ def start_bubbles(bubbles, frame, update_callback, done_callback):
 
 
 def grow_one(bubbles, frame, callback, done_callback):
+    global last_run
+
+    time_now = time.time()
+    print('Last run took %f', (time_now-last_run))
+
+    last_run = time_now
 
     global iters
 
@@ -25,10 +36,17 @@ def grow_one(bubbles, frame, callback, done_callback):
         # grow each spoke
         bubble.grow_all_spokes()
 
-        # Do any spokes intersect a poly_seg? Stop if so.
+    # for bubble_num in range(len(bubbles)):
+    #     # Do any spokes intersect a poly_seg? Stop if so.
+    #     bubbles.pop(bubble_num)
+    #     bubble.check_spokes(bubbles, frame)
+    #     bubbles.insert(bubble_num, bubble)
+
+    for bubble in bubbles:
         other_bubbles = copy(bubbles)
         other_bubbles.remove(bubble)
         bubble.check_spokes(other_bubbles, frame)
+
 
     callback(bubbles)
 
@@ -43,7 +61,7 @@ def grow_one(bubbles, frame, callback, done_callback):
         done_callback(bubbles, iters)
 
 
-    print('this thread ended')
+    #print('this thread ended')
 
 
 
@@ -58,8 +76,8 @@ def grow_more(bubbles):
     # all bubbles done?
     for bubble in bubbles:
         if bubble.spokes_growing():
-            print('grow more')
+            #print('grow more')
             return True
 
-    print('all done growing')
+    #print('all done growing')
     return False

@@ -1,11 +1,10 @@
 import math
 import random
-'''Rename me - is the center bubble and spokes and polygon '''
 
 
-class Bubble():
+class Bubble:
 
-    SPOKE_COUNT = 10
+    SPOKE_COUNT = 30
 
     def __init__(self, x, y, c):
         self.x = x
@@ -23,6 +22,8 @@ class Bubble():
 
     def init_spokes(self):
 
+        print('INIT SPOKES')
+
         count = self.SPOKE_COUNT
 
         circle = math.pi * 2
@@ -31,7 +32,7 @@ class Bubble():
         a = 0
 
         for spoke in range(count):
-            s = Spoke(a, self.x, self.y)
+            s = Spoke(a, self.x, self.y, spoke)
             a += angle
             self.spokes.append(s)
 
@@ -46,7 +47,6 @@ class Bubble():
 
 
     def grow_all_spokes(self):
-
         for spoke in self.spokes:
             spoke.grow()
 
@@ -57,9 +57,14 @@ class Bubble():
         return any(growing)
 
 
+    def active_spokes(self):
+        growing_spokes = [spoke for spoke in self.spokes if spoke.growing]
+        return growing_spokes
+
+
     def check_spokes(self, other_bubbles, frame_segs):
 
-        #print('check spokes')
+        print('number spokes active =', len(self.active_spokes()))
 
         if not self.spokes_growing():
             return
@@ -69,41 +74,37 @@ class Bubble():
             # print('check bubbles')
             polygon = other_bubble.update_polygon()
 
-            for spoke in self.spokes:
-                # print('check segs')
+            for spoke in self.active_spokes():
 
                 if spoke.growing:
 
                     for p in range(len(polygon)):    # A polyseg is a list of (x,y) tuples, one per points
                         polyseg = polygon[p]
                         next_polyseg = polygon[(p+1) % len(polygon) ]  # Wrap
-                        x = polyseg[0]
-                        y = polyseg[1]
-                        next_x = next_polyseg[0]
-                        next_y = next_polyseg[1]
-
-                        #print(x, y, next_x, next_y)
 
                         if intersect(spoke, polyseg, next_polyseg):
                             print('INTERSECT detected stopping spoke')
                             spoke.stop()
 
-                        if intersect_frame(spoke, frame_segs):
-                            print('INTERSECT with frame detected stopping spoke')
-                            spoke.stop()
+        for spoke in self.active_spokes():
+            if intersect_frame(spoke, frame_segs):
+                print('INTERSECT with frame detected stopping spoke')
+                spoke.stop()
 
 
 
 class Spoke():
 
-    def __init__(self, angle, bubble_x, bubble_y):
+    def __init__(self, angle, bubble_x, bubble_y, id):
         """ x, y are root of spoke - same as bubble location it grows from """
+        print("INIT SPOKE")
         self.x = bubble_x
         self.y = bubble_y
         self.angle = angle
         self.bubble_x = bubble_x
         self.bubble_y = bubble_y
         self.growing = True
+        self.id = id
 
 
     def grow(self):
@@ -121,18 +122,8 @@ class Spoke():
         print('spoke stop')
 
 
-#     def line():
-#         return Line(self.x, self.y, bubble_x, bubble_y)
-#
-# class Line():
-#
-#     def __init__(self, pt1_x, pt1_y, p2_x, pt2_y):
-#         self.pt1_x = pt
-#         self.pt1_y = pt1_y
-#         self.p2_x = pt2_x
-#         self.pt2_y = pt2_y
-
-
+    def __str__(self):
+        return 'Spoke %d base %f %f tip %f %f growing? %s', self.id, self.bubble_x, self.bubble_y, self.x, self.y, self.growing
 
 
 def intersect_frame(spoke, frames):
@@ -153,8 +144,84 @@ def intersect_frame(spoke, frames):
     return False
 
 
-def on_both_sides(spoke_base, angle, poly_seg_1, poly_seg_2):
-    pass
+def atan(opp, adj):
+
+
+
+    if opp == 0 and adj == 0:
+        return 0
+
+    if opp >= 0 and adj >= 0:     # both pos. correct(?)
+        if adj == 0:
+            return math.pi / 2
+        else:
+            return math.atan(opp / adj)
+
+    if opp >= 0 and adj < 0:    # opp positive, adj negative
+
+        if opp == 0:
+            return math.pi
+        small = math.atan(adj/opp)
+        return (math.pi/2) + abs(small)
+
+        #return math.pi + math.atan(opp/adj)
+
+    if opp < 0 and adj < 0:   # both neg
+
+        return math.atan(opp/adj) + math.pi   # add 180 deg
+
+    if opp < 0 and adj >= 0:    # opp negative, adj positive
+
+        if adj == 0:
+            return 1.5 * math.pi
+
+        #return (math.pi * 1.5) - math.atan(opp/adj)     # add 270deg
+        small = math.atan(adj/opp)
+        return (math.pi * 1.5) + abs(small)
+
+
+
+
+def on_both_sides(base, angle, pt1, pt2):
+
+    # Shift to put base at (0,0)
+
+    dx = 0 - base[0]
+    dy = 0 - base[1]
+
+    pt1_x = pt1[0] + dx
+    pt1_y = pt1[1] + dy
+
+    pt2_x = pt2[0] + dx
+    pt2_y = pt2[1] + dy
+
+    pt1angle = atan(pt1_x, pt1_y)
+    pt2angle = atan(pt2_x, pt2_y)
+
+
+    # Subtract angle from both
+
+    norm_pt1angle = (pt1angle - angle) % (2 * math.pi)
+    norm_pt2angle = (pt2angle - angle) % (2 * math.pi)
+
+    # If intersect, then spoke_base_angle will be between 0 and PI
+    # and spoke_tip_angle will be between PI and 2PI. Or vice-versa
+    # Both 0 or both PI ok too
+
+    a1 = min(norm_pt1angle, norm_pt2angle)
+    a2 = max(norm_pt1angle, norm_pt2angle)
+
+    if a1 < 0 or a1 > math.pi:
+        # Nope, outside range 0 - PI
+        # print('false smaller angle not on range 0-pi', a1, a2)
+        return False
+
+    if a2 < math.pi or a2 > math.pi * 2:
+        # Nope, outside range PI-2*PI
+        # print('false larger angle not in range pi-2pi', a1, a2)
+        return False
+
+    return True
 
 
 def intersect(spoke, poly_seg_1, poly_seg_2):
@@ -192,28 +259,19 @@ def intersect(spoke, poly_seg_1, poly_seg_2):
         # print('intersct spoke base x and polyseg1')
         return True
 
-    if spoke.bubble_x == poly_seg_2[0] and spoke.bubble_y== poly_seg_2[1]:
-        # print('intersct spoke base  and polyseg2')
+    if spoke.bubble_x == poly_seg_2[0] and spoke.bubble_y == poly_seg_2[1]:
+        # print('intersect spoke base  and polyseg2')
         return True
 
-
-    # What is polyseg angle?
-
-    #print('calcs testing spoke bisects infinite polyseg')
+    # TODO check for parallel lines ?
 
 
-    
+    # Calculate angle of poly segment
 
     dx = poly_seg_1[0] - poly_seg_2[0]
     dy = poly_seg_1[1] - poly_seg_2[1]
 
-    if dx == 0 and dy < 0:
-        poly_angle = -math.pi / 2
-    elif dx == 0 and dy >= 0:
-        poly_angle = math.pi / 2
-    else:
-        poly_angle = math.atan( dy / dx )
-
+    poly_angle = atan(dx, dy)  # Check
 
     spoke_base = (spoke.bubble_x, spoke.bubble_y)
     spoke_tip = (spoke.x, spoke.y)
@@ -228,139 +286,3 @@ def intersect(spoke, poly_seg_1, poly_seg_2):
     
     return False 
 
-
-    # Shift to put poly_seg_1 at (0,0)
-
-    dx = 0 - poly_seg_1[0]
-    dy = 0 - poly_seg_1[1]
-
-    s_tip_x = spoke.x + dx
-    s_tip_y = spoke.y + dy
-
-    s_base_x = spoke.bubble_x + dx
-    s_base_y = spoke.bubble_y + dy
-
-    # And shift other polyseg and spoke same way
-
-    ps1x = poly_seg_1[0] + dx    # 0
-    ps1y = poly_seg_1[1] + dy    # 0
-
-    ps2x = poly_seg_2[0] + dx   # needed?
-    ps2y = poly_seg_2[1] + dy
-
-
-    if s_tip_y == 0:
-        if s_tip_x < 0:
-            spoke_tip_angle = - math.pi / 2
-        else:
-            spoke_tip_angle = - math.pi / 2
-    else:
-        spoke_tip_angle = math.atan(s_tip_x / s_tip_y)
-
-
-    if s_base_y == 0:
-        if s_base_x < 0:
-            spoke_base_angle = - math.pi / 2
-        else:
-            spoke_base_angle = math.pi / 2
-    else:
-        spoke_base_angle = math.atan(s_base_x / s_base_y)
-
-
-    # Subtract poly_seg_1 angle from both
-
-    spoke_tip_angle = (spoke_tip_angle - poly_angle) % (2 * math.pi)
-    spoke_base_angle = (spoke_base_angle - poly_angle) % (2 * math.pi)
-
-    # If intersect, then spoke_base_angle will be between 0 and PI
-    # and spoke_tip_angle will be between PI and 2PI. Or vice-versa
-    # Both 0 or both PI ok too
-
-    a1 = min(spoke_base_angle, spoke_tip_angle)
-    a2 = max(spoke_base_angle, spoke_tip_angle)
-
-
-    # print('diff spokes', a1 - a2)
-
-
-    if a1 < 0 or a1 > math.pi:
-        # Nope, outside range 0 - PI
-        # print('false smaller angle not on range 0-pi', a1, a2)
-        return False
-
-
-    if a2 < math.pi or a2 > math.pi * 2:
-        # Nope, outside range PI-2*PI
-        # print('false larger angle not in range pi-2pi', a1, a2)
-        return False
-
-
-
-    # check if poly_seg points are on both sides of the spoke
-
-    # print('calcs testing polysec bisects infinite spoke')
-
-    # Shift all coords to put spoke tip at (0,0)
-
-    dx = 0 - spoke.x
-    dy = 0 - spoke.y
-
-    sx = spoke.x + dx
-    sy = spoke.y + dy
-
-    # And shift polysegs same way
-
-    ps1x = poly_seg_1[0] + dx
-    ps1y = poly_seg_1[1] + dy
-
-    ps2x = poly_seg_2[0] + dx
-    ps2y = poly_seg_2[1] + dy
-
-
-    if ps1y == 0:
-        if ps1x < 0:
-            ps1angle = -math.pi / 2
-        else :
-            ps1angle = math.pi / 2
-    else:
-        ps1angle = math.atan(ps1x / ps1y)
-
-    if ps2y == 0:
-        if ps2x < 0:
-            ps2angle = - math.pi / 2
-        else :
-            ps2angle = math.pi / 2
-
-    else:
-        ps2angle = math.atan(ps2x / ps2y)
-
-    # Subtract spoke angle from both
-
-    dps1angle = (ps1angle - spoke.angle) % (2 * math.pi)
-    dps2angle = (ps2angle - spoke.angle) % (2 * math.pi)
-
-    # If intersect, then dps1angle will be between 0 and PI and dps2angle will be between PI and 2PI. Or vice-versa
-    # Both 0 or both PI ok too
-
-    a1 = min(dps1angle, dps2angle)
-    a2 = max(dps1angle, dps2angle)
-
-    # print('diff polyseg', a1 - a2)
-
-    if a1 < 0 or a1 > math.pi:
-        # Nope, outside range 0 - PI
-        # print('false smaller angle not in range 0-pi ', a1, a2)
-        return False
-
-
-    if a2 < math.pi or a2 > math.pi * 2:
-        # Nope, outside range PI-2*PI
-        # print('false larger angle not in range pi-2pi', a1, a2)
-
-        return False
-
-    # TODO check for parallel lines, angles will be same
-
-
-
-    return True
