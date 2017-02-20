@@ -91,18 +91,6 @@ class TestIntersect(TestCase):
         self.assertFalse(geometry.intersect(spoke, seg1, seg2))
 
 
-    # def test_also_does_intersect(self):
-    #
-    #     spoke = Spoke(0.463647609, 10, 10)
-    #     spoke.x = 8
-    #     spoke.y = 9
-    #
-    #     seg1 = (9, 9)
-    #     seg2 = (8, 9.5)
-    #
-    #     self.assertTrue(geometry.intersect(spoke, seg1, seg2))
-
-
 
     def test_parallel_intersect_start_same_place(self):
 
@@ -135,7 +123,7 @@ class TestIntersect(TestCase):
         spoke.x = 4.0010101
         spoke.y = 2.12
 
-        seg1 = (3.011, 2.1553534)
+        seg1 = (3.011, 1.1553534)    # It helps if you write a test that actually should pass.
         seg2 = (3.01434, 4.213132)
 
         self.assertTrue(geometry.intersect(spoke, seg1, seg2))

@@ -12,9 +12,9 @@ bubbles = []
 win = None
 
 width = 400
-height = 250
+height = 450
 
-SPOKE_COUNT = 30
+SPOKE_COUNT = 50
 
 class Window(Frame):
     def __init__(self, parent):
@@ -25,7 +25,7 @@ class Window(Frame):
 
     def initUI(self):
         self.parent.title('Bubble Fill')
-        self.pack(fill=X, expand=1)
+        self.pack(fill=BOTH, expand=1)
 
         self.canvas = Canvas(self, borderwidth=1, background='black')
         self.canvas.bind('<Button-1>', canvas_click)
@@ -40,12 +40,6 @@ class Window(Frame):
         quit_button.pack(side=LEFT)
 
         self.pack()
-
-
-    def draw(self, canvas):
-
-        canvas.create_line(15, 25, 200, 25)
-        canvas.create_line(15.5, 25.5, 200.5, 25.5, fill="red")
 
 
 def canvas_click(event):
@@ -67,7 +61,7 @@ def canvas_click(event):
 def go():
 
     x = 400 # int(win.canvas['width'])  # how to measure the canvas?
-    y = 200 #int(win.canvas['height'])
+    y = 400 #int(win.canvas['height'])  # rtfm
 
     print("go!", x, y)
     win.go_button['state'] = DISABLED
