@@ -1,7 +1,8 @@
-from tkinter import Tk, Canvas, Frame, Scale, Button, BOTH, LEFT, X, HORIZONTAL
+from tkinter import Tk, Canvas, Frame, Scale, Button, BOTH, LEFT, X, HORIZONTAL, DISABLED
 import sys
 import bubble
 from geometry import Bubble
+import threading
 
 # Helpful: http://zetcode.com/gui/tkinter/drawing/
 
@@ -27,8 +28,8 @@ class Window(Frame):
         scale = Scale(self, from_=10, to=100, orient=HORIZONTAL)
         scale.pack(side=LEFT)
 
-        go_button = Button(self, text="Go", command=go)
-        go_button.pack(side=LEFT)
+        self.go_button = Button(self, text="Go", command=go)
+        self.go_button.pack(side=LEFT)
 
         quit_button = Button(self, text="Quit", command=quit)
         quit_button.pack(side=LEFT)
@@ -59,42 +60,64 @@ def canvas_click(event):
 
 
 def go():
-    print("click!")
-    bubble.start_bubbles(bubbles, update, done)
+
+    x = int(win.canvas['width'])
+    y = int(win.canvas['height'])
+
+    print("go!", x, y)
+    win.go_button['state'] = DISABLED
+
+
+    frame = [(0, 0), (0, y), (x, 0), (x, y)]
+    bubble.start_bubbles(bubbles, frame, update, done)
 
 
 def update(bubbles_and_spokes):
     print('update message received')
     # Draw all lines
+    print('threads running = ', threading.active_count())
 
-    for bubble in bubbles:
+    for bub in bubbles_and_spokes:
         # draw bubbles
-        for spoke in bubble.spokes:
-            #draw spoke
-            win.canvas.create_line(bubble.x, bubble.y, spoke.x, spoke.y, fill=bubble.color)
+        for spoke in bub.spokes:
+            # draw spoke
+            win.canvas.create_line(bub.x, bub.y, spoke.x, spoke.y, fill=bub.color)
+
 
 def done(bubbles_and_spokes, iters):
     print('done after %d iterations' % iters)
     # Draw all lines
     # draw polygons
     # output list of polygon point for each bubble
-    for bubble in bubbles_and_spokes:
 
-        polygon = bubble.update_polygon()
+    print('Polygon Coordinates')
+
+
+    for bub in bubbles_and_spokes:
+
+
+        polygon = bub.update_polygon()
+        print('--------------------------------------------------------')
+        print(bub.x, bub.y)
         print(polygon)
+
         # draw bubbles
         for p in range(len(polygon)):    # A polyseg is a list of (x,y) tuples, one per points
-            #draw spoke
+            # draw spoke
             polyseg = polygon[p]
-            next_polyseg = polygon[(p+1) % len(polygon) ]  # Wrap
+            next_polyseg = polygon[(p+1) % len(polygon)]  # Wrap
             x = polyseg[0]
             y = polyseg[1]
             next_x = next_polyseg[0]
             next_y = next_polyseg[1]
 
-            print(x, y, next_x, next_y)
 
-            win.canvas.create_line(x, y, next_x, next_y, fill=bubble.color)
+            # print(x, y, next_x, next_y)
+
+            win.canvas.create_line(x, y, next_x, next_y, fill=bub.color)
+
+        print('--------------------------------------------------------')
+
 
 
 def quit():
@@ -102,17 +125,23 @@ def quit():
 
 
 color = 0
-colors = ['red', 'orange', 'yellow', 'green', 'blue']
+colors = ['red', 'orange', 'yellow', 'green', 'blue', 'magenta', 'cyan']
 
 bubbles = []
 
 win = None
 
+width = 400
+height = 250
+
 def main():
     global win
     root = Tk()
     win = Window(root)
-    root.geometry("400x250")
+
+
+
+    root.geometry("%dx%d" % (width, height))
     root.mainloop()
 
 if __name__ == '__main__':
